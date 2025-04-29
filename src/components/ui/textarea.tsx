@@ -1,13 +1,28 @@
-export function Textarea({ value, onChange, maxLength, placeholder, className }) {
-    return (
-      <textarea
-        value={value}
-        onChange={onChange}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        className={`border rounded px-3 py-2 w-full ${className}`}
-        rows={3}
-      />
-    );
-  }
-  
+import React from "react";
+
+interface TextareaProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  maxLength?: number;
+  placeholder?: string;
+  className?: string;
+}
+
+export function Textarea({
+  value,
+  onChange,
+  maxLength,
+  placeholder,
+  className,
+}: TextareaProps) {
+  return (
+    <textarea
+      value={value}
+      onChange={onChange}
+      maxLength={maxLength}
+      placeholder={placeholder}
+      className={`${className || ""}`}
+      rows={3}
+    />
+  );
+}

@@ -15,30 +15,40 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 
+// definizione del tipo per ogni voce di storia
+interface Entry {
+  date: string;
+  mood: number;
+  anxiety: number;
+  note: string;
+}
+
 const MentalHealthDashboard = () => {
   const today = format(new Date(), "dd/MM/yyyy");
 
-  const [mood, setMood] = useState(5);
-  const [anxiety, setAnxiety] = useState(5);
-  const [note, setNote] = useState("");
-  const [history, setHistory] = useState([]);
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [mood, setMood] = useState<number>(5);
+  const [anxiety, setAnxiety] = useState<number>(5);
+  const [note, setNote] = useState<string>("");
+  // history usa il tipo Entry per non incorrere in never[]
+  const [history, setHistory] = useState<Entry[]>([]);
+  const [selectedDay, setSelectedDay] = useState<Entry | null>(null);
 
-  // Caricare i dati salvati dal localStorage all'avvio
+  // carica i dati da localStorage
   useEffect(() => {
     const savedData = localStorage.getItem("mentalHealthHistory");
     if (savedData) {
-      setHistory(JSON.parse(savedData));
+      setHistory(JSON.parse(savedData) as Entry[]);
     }
   }, []);
 
-  // Salvare ogni volta che history cambia
+  // salva su localStorage quando cambia history
   useEffect(() => {
     localStorage.setItem("mentalHealthHistory", JSON.stringify(history));
   }, [history]);
 
   const saveDay = () => {
-    const newEntry = { date: today, mood, anxiety, note };
+    const newEntry: Entry = { date: today, mood, anxiety, note };
+    // aggiorna history rimuovendo eventuali voci con stessa data e mantenendo max 30
     const updatedHistory = [
       ...history.filter((entry) => entry.date !== today),
       newEntry,
@@ -58,25 +68,28 @@ const MentalHealthDashboard = () => {
     (history.slice(-7).length || 1)
   ).toFixed(1);
 
-  const todayEntry = history.find((entry) => entry.date === today);
+  const todayEntry = history.find((entry) => entry.date === today) || null;
   const todayAvg = todayEntry
     ? ((todayEntry.mood + todayEntry.anxiety) / 2).toFixed(1)
     : null;
 
-  const getColor = (value) => {
+  const getColor = (value: number) => {
     if (value >= 8) return "bg-green-100 text-green-700";
     if (value >= 5) return "bg-yellow-100 text-yellow-700";
     return "bg-red-100 text-red-700";
   };
 
-  const getJudgement = (value) => {
+  const getJudgement = (value: number) => {
     if (value >= 8) return { text: "Giornata ottima", emoji: "🙂" };
     if (value >= 5) return { text: "Giornata media", emoji: "😐" };
     return { text: "Giornata difficile", emoji: "🙁" };
   };
 
-  const findDayEntry = (day) => {
-    return history.find((entry) => parseInt(entry.date.split("/")[0]) === day);
+  const findDayEntry = (day: number) => {
+    return (
+      history.find((entry) => parseInt(entry.date.split("/")[0]) === day) ||
+      null
+    );
   };
 
   return (
@@ -167,7 +180,7 @@ const MentalHealthDashboard = () => {
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className={getColor(moodAvg)}>
+        <Card className={getColor(Number(moodAvg))}>
           <CardContent className="p-6 text-center">
             <h2 className="text-lg font-semibold">
               Media umore ultimi 7 giorni
@@ -177,7 +190,7 @@ const MentalHealthDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className={getColor(anxietyAvg)}>
+        <Card className={getColor(Number(anxietyAvg))}>
           <CardContent className="p-6 text-center">
             <h2 className="text-lg font-semibold">
               Media ansia ultimi 7 giorni
@@ -192,9 +205,11 @@ const MentalHealthDashboard = () => {
         <Card className="bg-white shadow p-6 flex flex-col items-center justify-center">
           {todayAvg && (
             <>
-              <div className="text-4xl">{getJudgement(todayAvg).emoji}</div>
+              <div className="text-4xl">
+                {getJudgement(Number(todayAvg)).emoji}
+              </div>
               <p className="text-2xl font-semibold mt-2">
-                {getJudgement(todayAvg).text}
+                {getJudgement(Number(todayAvg)).text}
               </p>
             </>
           )}
